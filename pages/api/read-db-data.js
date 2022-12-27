@@ -1,7 +1,6 @@
 import fs from "fs"; 
 
 export default function fileService(req, res) {
-    let json = {};
     fs.readFile("./data/DbData.json", (err, data) => {
         data = JSON.parse(data.toString());
 
@@ -9,10 +8,7 @@ export default function fileService(req, res) {
             throw err;
         }
 
-        json = data;
-
-        res.status(200).json(json); 
-        return;
+        res.status(200).json(data); 
     });
 
     res.status(500);

@@ -72,13 +72,13 @@ async function uploadQuote() {
         },
     };
 
-    // ddb.putItem(params, (err, data) => {
-    //     if (err) {
-    //         console.log(`Error uploading data to DynamoDB table\n${err}`); 
-    //     } else {
-    //         console.log(`Successfully uploaded data to DynamoDB table\n${data}`);
-    //     }
-    // })
+    ddb.putItem(params, (err, data) => {
+        if (err) {
+            console.log(`Error uploading data to DynamoDB table\n${err}`); 
+        } else {
+            console.log(`Successfully uploaded data to DynamoDB table\n${data}`);
+        }
+    })
 
     dbData.TableItemCount++;
 
@@ -87,7 +87,7 @@ async function uploadQuote() {
     fetch("http://localhost:3000/api/update-db-data", {
         method: "PUT",
         headers: {
-            "Content-type": "application/json",
+            "Content-type": "text/plain",
         },
         body: JSON.stringify(dbData, null, 4),
     }).then(res => console.log(res));
