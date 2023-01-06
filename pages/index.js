@@ -1,65 +1,24 @@
-import useSWR from "swr"; 
-import * as AWS from "aws-sdk";
+import { DynamoDBClient, GetItemCommand, PutItemCommand } from "@aws-sdk/client-dynamodb";
 import React from "react";
+import styles from "../styles/index.module.css";
 
-let dbData = {};
-let inputAreaRef = 0;
+// ddb: the DynamoDBClient used to interact with the DynamoDB service
+let ddb = new DynamoDBClient({ 
+    credentials: {
+        accessKeyId: "AKIASDKGBI6CP2E3W5YQ",
+        secretAccessKey: "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",
+    },
+    region: "us-east-1",
+});
 
-const fetcher = async (url) => {
-    const res = await fetch(url); 
-    const data = await res.json();
-
-    if (res.status !== 200) {
-        throw new Error(data.message); 
-    }
-
-    return data; 
-}
-
-function QuoteDisplay(props) {
-    let ddb = new AWS.DynamoDB({ apiVersion: "2012-08-10" }); 
-    const { data, error } = useSWR("/api/read-db-data", fetcher);
-
-    if (error) {
-        console.log(error);
-        return <p id="quote-display">Error fetching feedback from the database.</p>; 
-    }
-
-    if (!data) {
-        return <p>loading...</p>
-    }
-
-    if (data.TableItemCount === 0) {
-        return <p id="quote-display">No feedback in the database.</p>
-    }
-
-    const params = {
-        TableName: data.TableName,
-        Key: {
-            "quoteId": { 
-                N: `${Math.random() * data.TableItemCount}`,
-            }, 
-        }
-    };
-    
-    ddb.getItem(params, (err, data) => {
-        if (err) {
-            console.log(err); 
-            return <p id="quote-display">Error fetching feedback from the database.</p>; 
-        } else {
-            return <p id="quote-display">{data}</p>
-        }
-    });
-}
-
-async function uploadQuote() {
-    const feedback = inputAreaRef.current.value;
-    if (feedback === "") {
+// uploadQuote: uploads a piece of feedback to the DynamoDB table
+function uploadQuote(dbData, inputtedQuote) {
+    // Ignore empty feedback
+    if (inputtedQuote.trim() === "") {
         return;
     }
 
-    let ddb = new AWS.DynamoDB({ apiVersion: "2012-08-10" }); 
-
+    // Parameters to send to DynamoDB
     const params = {
         TableName: dbData.TableName,
         Item: {
@@ -67,57 +26,89 @@ async function uploadQuote() {
                 N: `${dbData.TableItemCount}`,
             },
             quote: {
-                S: feedback,
+                S: inputtedQuote,
             },
         },
     };
 
-    ddb.putItem(params, (err, data) => {
-        if (err) {
-            console.log(`Error uploading data to DynamoDB table\n${err}`); 
-        } else {
-            console.log(`Successfully uploaded data to DynamoDB table\n${data}`);
-        }
-    })
+    const command = new PutItemCommand(params);
+
+    // Run the PutItemCommand to put an item into the database, and resolve the Promise
+    ddb.send(command)
+        .then(data => console.log(`Successfully uploaded data to DynamoDB table\n${data}`))
+        .catch(err => console.log(`Error uploading data to DynamoDB table\n${err}`));
 
     dbData.TableItemCount++;
 
-    console.log(JSON.stringify(dbData));
-
+    // Replace the data in the json file with an updated TableItemCount
     fetch("http://localhost:3000/api/update-db-data", {
         method: "PUT",
         headers: {
             "Content-type": "text/plain",
         },
         body: JSON.stringify(dbData, null, 4),
-    }).then(res => console.log(res));
+    });
 }
 
-export default function Page() {
-    AWS.config.update({
-        region: "us-east-1",
-        accessKeyId: "AKIASDKGBI6CP2E3W5YQ",
-        secretAccessKey: "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",
-    }); 
+// Page: the component for the main page
+export default function Page(props) {
+    const [ input, setInput ] = React.useState("");
 
-    inputAreaRef = React.useRef(null); 
-    const { data, error } = useSWR("/api/read-db-data", fetcher);
+    let quote = "";
 
-    if (error) {
-        console.log(`Error reading DynamoDB table info\n${error}`);
-        return;
+    // Handle if there is an error 
+    if (props.error) {
+        console.log(props.error);
+        quote = props.error;
+    } else {
+        quote = props.quote;
     }
 
-    dbData = data;
-
-    let quoteDisplayArea = <QuoteDisplay/>; 
-    let submitButton = <button id="submit-quote" onClick={uploadQuote}>Submit</button>;
-
 	return (
-        <div className="root">
-            {quoteDisplayArea}
-            <textarea id="quote-input" ref={inputAreaRef}></textarea> <br/><br/>
-            {submitButton}
+        <div className={styles.root}>
+            <p>{quote}</p>
+            <textarea 
+                value={input}
+                itemID={styles.quoteInput}
+                onChange={e => setInput(e.target.value)}/> 
+            <br/><br/>
+            <button 
+                itemID={styles.submitQuote}
+                onClick={() => uploadQuote(props.data, input)}>Submit</button>
         </div>
     );
+}
+
+export async function getServerSideProps() {
+    // Get the table's data from the json file
+    const dbData = await fetch("http://localhost:3000/api/read-db-data").then(res => res.json());
+
+    let props = { data: dbData };
+
+    if (dbData.TableItemCount === 0) {
+        props.error = "No feedback in the database!";
+        return { props };
+    }
+
+    const params = {
+        TableName: dbData.TableName,
+        Key: {
+            "quoteId": {
+                N: `${Math.floor(Math.random() * dbData.TableItemCount)}`,
+            },
+        },
+    };
+
+    const command = new GetItemCommand(params);
+
+    // Read one piece of data from the DynamoDB table and deal with any errors
+    try {
+        const data = await ddb.send(command);
+        props.quote = data.Item.quote.S;
+    } catch (err) {
+        console.log(err);
+        props.error = "Error fetching feedback from the database.";
+    }
+
+    return { props };
 }

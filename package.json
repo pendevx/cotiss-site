@@ -9,6 +9,9 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@aws-sdk/client-docdb": "^3.245.0",
+    "@aws-sdk/client-dynamodb": "^3.245.0",
+    "@aws-sdk/lib-dynamodb": "^3.245.0",
     "@next/font": "13.1.0",
     "aws-sdk": "^2.1281.0",
     "cross-env": "^7.0.3",
