@@ -1,15 +1,19 @@
 import { DynamoDBClient, GetItemCommand, PutItemCommand } from "@aws-sdk/client-dynamodb";
 import React from "react";
 import styles from "../styles/index.module.css";
+import * as packageJson from "../package.json";
 
 // ddb: the DynamoDBClient used to interact with the DynamoDB service
 let ddb = new DynamoDBClient({ 
     credentials: {
-        accessKeyId: "AKIASDKGBI6CP2E3W5YQ",
-        secretAccessKey: "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",
+        accessKeyId: "AKIASDKGBI6CFSQ7DD72",
+        secretAccessKey: "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",
     },
     region: "us-east-1",
 });
+
+const startCommand = packageJson.scripts.start.split(' ');
+const PORT = startCommand[startCommand.length - 1]; 
 
 // uploadQuote: uploads a piece of feedback to the DynamoDB table
 function uploadQuote(dbData, inputtedQuote) {
@@ -41,7 +45,7 @@ function uploadQuote(dbData, inputtedQuote) {
     dbData.TableItemCount++;
 
     // Replace the data in the json file with an updated TableItemCount
-    fetch("http://localhost:3000/api/update-db-data", {
+    fetch(`http://localhost:${PORT}/api/update-db-data`, {
         method: "PUT",
         headers: {
             "Content-type": "text/plain",
@@ -81,7 +85,7 @@ export default function Page(props) {
 
 export async function getServerSideProps() {
     // Get the table's data from the json file
-    const dbData = await fetch("http://localhost:3000/api/read-db-data").then(res => res.json());
+    const dbData = await fetch(`http://localhost:${PORT}/api/read-db-data`).then(res => res.json());
 
     let props = { data: dbData };
 
