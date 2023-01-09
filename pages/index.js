@@ -9,6 +9,8 @@ const PORT = startCommand[startCommand.length - 1];
 // The credentials used to instantiate the DynamoDB client
 const ddbCredentials = fetch(`http://localhost:${PORT}/api/get-api-keys`).then(res => res.json());
 
+console.log(ddbCredentials);
+
 // ddb: the DynamoDBClient used to interact with the DynamoDB service
 let ddb = new DynamoDBClient({ 
     credentials: ddbCredentials,
