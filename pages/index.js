@@ -1,5 +1,4 @@
 import { DynamoDBClient, GetItemCommand, PutItemCommand } from "@aws-sdk/client-dynamodb";
-import { SSMClient } from "@aws-sdk/client-ssm";
 import React from "react";
 import styles from "../styles/index.module.css";
 import * as packageJson from "../package.json";
