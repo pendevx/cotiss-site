@@ -3,17 +3,17 @@ import React from "react";
 import styles from "../styles/index.module.css";
 import * as packageJson from "../package.json";
 
-// ddb: the DynamoDBClient used to interact with the DynamoDB service
-let ddb = new DynamoDBClient({ 
-    credentials: {
-        accessKeyId: "AKIASDKGBI6CFSQ7DD72",
-        secretAccessKey: "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",
-    },
-    region: "us-east-1",
-});
-
 const startCommand = packageJson.scripts.start.split(' ');
 const PORT = startCommand[startCommand.length - 1]; 
+
+// The credentials used to instantiate the DynamoDB client
+const ddbCredentails = fetch(`http://localhost:${PORT}/api/get-api-keys`).then(res => res.json());
+
+// ddb: the DynamoDBClient used to interact with the DynamoDB service
+let ddb = new DynamoDBClient({ 
+    credentials: ddbCredentails,
+    region: "us-east-1",
+});
 
 // uploadQuote: uploads a piece of feedback to the DynamoDB table
 function uploadQuote(dbData, inputtedQuote) {
