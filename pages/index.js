@@ -1,4 +1,5 @@
 import { DynamoDBClient, GetItemCommand, PutItemCommand } from "@aws-sdk/client-dynamodb";
+import { SSMClient } from "@aws-sdk/client-ssm";
 import React from "react";
 import styles from "../styles/index.module.css";
 import * as packageJson from "../package.json";
@@ -7,11 +8,11 @@ const startCommand = packageJson.scripts.start.split(' ');
 const PORT = startCommand[startCommand.length - 1]; 
 
 // The credentials used to instantiate the DynamoDB client
-const ddbCredentails = fetch(`http://localhost:${PORT}/api/get-api-keys`).then(res => res.json());
+const ddbCredentials = fetch(`http://localhost:${PORT}/api/get-api-keys`).then(res => res.json());
 
 // ddb: the DynamoDBClient used to interact with the DynamoDB service
 let ddb = new DynamoDBClient({ 
-    credentials: ddbCredentails,
+    credentials: ddbCredentials,
     region: "us-east-1",
 });
 
