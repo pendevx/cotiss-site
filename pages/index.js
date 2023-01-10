@@ -3,19 +3,12 @@ import React from "react";
 import styles from "../styles/index.module.css";
 import * as packageJson from "../package.json";
 
-const startCommand = packageJson.scripts.start.split(' ');
-const PORT = startCommand[startCommand.length - 1]; 
-
-// The credentials used to instantiate the DynamoDB client
-const ddbCredentials = fetch(`http://localhost:${PORT}/api/get-api-keys`).then(res => res.json());
-
-console.log(ddbCredentials);
+const startCommand = packageJson.scripts.start.split(" ");
+// const PORT = startCommand[startCommand.length - 1]; 
+const PORT = 3000;
 
 // ddb: the DynamoDBClient used to interact with the DynamoDB service
-let ddb = new DynamoDBClient({ 
-    credentials: ddbCredentials,
-    region: "us-east-1",
-});
+let ddb = {};
 
 // uploadQuote: uploads a piece of feedback to the DynamoDB table
 function uploadQuote(dbData, inputtedQuote) {
@@ -86,6 +79,15 @@ export default function Page(props) {
 }
 
 export async function getServerSideProps() {
+    // Get the ddb client credentials
+    let ddbCredentials = await fetch(`http://localhost:${PORT}/api/get-api-keys`).then(res => res.json()).catch(err => console.log(err));
+
+    // Populate the ddb client object
+    ddb = new DynamoDBClient({ 
+        credentials: ddbCredentials,
+        region: "us-east-1",
+    });
+
     // Get the table's data from the json file
     const dbData = await fetch(`http://localhost:${PORT}/api/read-db-data`).then(res => res.json());
 
