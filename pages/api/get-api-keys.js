@@ -9,6 +9,10 @@ export default function getApiKeys(req, res) {
         res.status(400);
         return;
     }
+
+    console.log(process.env);
+    console.log(process.env.DDB_Quotes_AKI);
+    console.log(process.env.DDB_Quotes_SAK);
     
     res.status(200).json({
         accessKeyId: process.env.DDB_Quotes_AKI,
