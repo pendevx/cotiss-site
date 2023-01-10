@@ -4,8 +4,7 @@ import styles from "../styles/index.module.css";
 import * as packageJson from "../package.json";
 
 const startCommand = packageJson.scripts.start.split(" ");
-// const PORT = startCommand[startCommand.length - 1]; 
-const PORT = 3000;
+const PORT = startCommand[startCommand.length - 1]; 
 
 // ddb: the DynamoDBClient used to interact with the DynamoDB service
 let ddb = {};
