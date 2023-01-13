@@ -3,8 +3,6 @@ const requestIp = require("request-ip");
 export default function getApiKeys(req, res) {
     const clientIp = requestIp.getClientIp(req);
 
-    console.log(clientIp);
-
     if (!(clientIp === "::1" || clientIp === "127.0.0.1" || clientIp === "::ffff:127.0.0.1")) {
         res.status(400);
         return;
