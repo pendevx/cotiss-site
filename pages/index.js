@@ -78,10 +78,10 @@ export default function Page(props) {
 }
 
 export async function getServerSideProps() {
-    // Get the ddb client credentials
-    let ddbCredentials = await fetch(`http://localhost:${PORT}/api/get-api-keys`).then(res => res.json()).catch(err => console.log(err));
+    // Get the ddb client credentials    
+    const ddbCredentials = await fetch(`http://localhost:${PORT}/api/get-api-keys`).then(res => res.json()).catch(err => console.log(err));
 
-    // Populate the ddb client object
+    // Instantiate the ddb client object
     ddb = new DynamoDBClient({ 
         credentials: ddbCredentials,
         region: "us-east-1",

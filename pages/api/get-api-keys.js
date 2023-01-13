@@ -5,14 +5,10 @@ export default function getApiKeys(req, res) {
 
     console.log(clientIp);
 
-    if (!(clientIp === "::1" || clientIp === "127.0.0.1")) {
+    if (!(clientIp === "::1" || clientIp === "127.0.0.1" || clientIp === "::ffff:127.0.0.1")) {
         res.status(400);
         return;
     }
-
-    console.log(process.env);
-    console.log(process.env.DDB_Quotes_AKI);
-    console.log(process.env.DDB_Quotes_SAK);
     
     res.status(200).json({
         accessKeyId: process.env.DDB_Quotes_AKI,
