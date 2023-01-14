@@ -1,55 +1,38 @@
-import { DynamoDBClient, GetItemCommand, PutItemCommand } from "@aws-sdk/client-dynamodb";
 import React from "react";
 import styles from "../styles/index.module.css";
-import * as packageJson from "../package.json";
 
-const startCommand = packageJson.scripts.start.split(" ");
-const PORT = startCommand[startCommand.length - 1]; 
-
-// ddb: the DynamoDBClient used to interact with the DynamoDB service
-let ddb = {};
+const _PORT = process.env.port || 8080;
 
 // uploadQuote: uploads a piece of feedback to the DynamoDB table
-function uploadQuote(dbData, inputtedQuote) {
+function uploadQuote(_dbData, inputtedQuote) {
     // Ignore empty feedback
     if (inputtedQuote.trim() === "") {
         return;
     }
 
-    // Parameters to send to DynamoDB
-    const params = {
-        TableName: dbData.TableName,
-        Item: {
-            quoteId: {
-                N: `${dbData.TableItemCount}`,
-            },
-            quote: {
-                S: inputtedQuote,
-            },
+    fetch(`http://localhost:${_PORT}/api/upload-data-ddb`, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
         },
-    };
-
-    const command = new PutItemCommand(params);
-
-    // Run the PutItemCommand to put an item into the database, and resolve the Promise
-    ddb.send(command)
-        .then(data => console.log(`Successfully uploaded data to DynamoDB table\n${data}`))
-        .catch(err => console.log(`Error uploading data to DynamoDB table\n${err}`));
-
-    dbData.TableItemCount++;
+        body: JSON.stringify({
+            PORT: _PORT,
+            dbData: _dbData,
+            quote: inputtedQuote
+        })
+    }).then(() => _dbData.TableItemCount++);
 
     // Replace the data in the json file with an updated TableItemCount
-    fetch(`http://localhost:${PORT}/api/update-db-data`, {
+    fetch(`http://localhost:${_PORT}/api/update-db-data`, {
         method: "PUT",
-        headers: {
-            "Content-type": "text/plain",
-        },
-        body: JSON.stringify(dbData, null, 4),
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(_dbData)
     });
 }
 
 // Page: the component for the main page
 export default function Page(props) {
+    console.log(props);
     const [ input, setInput ] = React.useState("");
 
     let quote = "";
@@ -78,44 +61,27 @@ export default function Page(props) {
 }
 
 export async function getServerSideProps() {
-    // Get the ddb client credentials    
-    const ddbCredentials = await fetch(`http://localhost:${PORT}/api/get-api-keys`).then(res => res.json()).catch(err => console.log(err));
-
-    // Instantiate the ddb client object
-    ddb = new DynamoDBClient({ 
-        credentials: ddbCredentials,
-        region: "us-east-1",
-    });
-
     // Get the table's data from the json file
-    const dbData = await fetch(`http://localhost:${PORT}/api/read-db-data`).then(res => res.json());
+    const _dbData = await fetch(`http://localhost:${_PORT}/api/read-db-data`).then(res => res.json());
 
-    let props = { data: dbData };
+    let props = { data: _dbData };
 
-    if (dbData.TableItemCount === 0) {
+    if (_dbData.TableItemCount === 0) {
         props.error = "No feedback in the database!";
         return { props };
     }
 
-    const params = {
-        TableName: dbData.TableName,
-        Key: {
-            "quoteId": {
-                N: `${Math.floor(Math.random() * dbData.TableItemCount)}`,
-            },
-        },
-    };
+    console.log(_dbData)
+    
+    const quote = await fetch(`http://localhost:${_PORT}/api/read-db-quote`)
+        .then(res => res.json())
+        .catch(err => {
+            console.log(err);
+            props.error = err;
+        }
+    );
 
-    const command = new GetItemCommand(params);
-
-    // Read one piece of data from the DynamoDB table and deal with any errors
-    try {
-        const data = await ddb.send(command);
-        props.quote = data.Item.quote.S;
-    } catch (err) {
-        console.log(err);
-        props.error = "Error fetching feedback from the database.";
-    }
+    props.quote = quote;
 
     return { props };
 }

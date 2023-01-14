@@ -1,15 +1,9 @@
 import fs from "fs"; 
 
 export default function fileService(req, res) {
-    fs.readFile("./data/DbData.json", (err, data) => {
-        data = JSON.parse(data.toString());
+    let data = JSON.parse(fs.readFileSync("./data/DbData.json", "utf8"));
 
-        if (err) {
-            throw err;
-        }
-
-        res.status(200).json(data); 
-    });
-
-    res.status(500);
+    console.log(data);
+    
+    res.status(200).json(data);
 }

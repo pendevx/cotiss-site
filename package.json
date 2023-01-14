@@ -3,25 +3,19 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "cross-env NODE_OPTIONS='--inspect' next dev",
+    "dev": "cross-env NODE_OPTIONS='--inspect' next dev --port 8080",
     "build": "next build",
-    "start": "next start -p 80",
+    "start": "next start -- --port $PORT",
     "lint": "next lint"
   },
   "dependencies": {
-    "@aws-sdk/client-docdb": "^3.245.0",
     "@aws-sdk/client-dynamodb": "^3.245.0",
-    "@aws-sdk/client-ssm": "^3.245.0",
-    "@aws-sdk/lib-dynamodb": "^3.245.0",
-    "@next/font": "13.1.0",
-    "aws-sdk": "^2.1281.0",
     "cross-env": "^7.0.3",
     "eslint": "8.30.0",
     "eslint-config-next": "13.1.0",
     "next": "13.1.0",
     "react": "18.2.0",
     "react-dom": "18.2.0",
-    "request-ip": "^3.3.0",
-    "swr": "^2.0.0"
+    "request-ip": "^3.3.0"
   }
 }
