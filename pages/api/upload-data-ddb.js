@@ -1,7 +1,7 @@
 import { DynamoDBClient, PutItemCommand } from "@aws-sdk/client-dynamodb";
 const requestIp = require("request-ip");
 
-export default function uploadToDDB(req, res) {
+export default async function uploadToDDB(req, res) {
     function isLocalIP(ip) {
         if (!(ip === "::1" || ip === "127.0.0.1" || ip === "::ffff:127.0.0.1")) {
             return false;
@@ -15,7 +15,7 @@ export default function uploadToDDB(req, res) {
         return;
     }
 
-    const ddbCredentials = fetch(`http://localhost:${req.body.PORT}/api/get-api-keys`)
+    const ddbCredentials = await fetch(`http://localhost:${req.body.PORT}/api/get-api-keys`)
         .then(res => res.json())
         .catch(err => console.log(err));
 
@@ -39,15 +39,13 @@ export default function uploadToDDB(req, res) {
 
     const command = new PutItemCommand(params);
 
-    // Run the PutItemCommand to put an item into the database, and resolve the Promise
-    client.send(command)
-        .then(data => {
-            console.log(`Successfully uploaded data to DynamoDB table\n${data}`);
-            res.status(200);
-        })
-        .catch(err => {
-            console.log(`Error uploading data to DynamoDB table\n${err}`);
-            res.status(500).json({ error: err });
-        }
-    );
+    // Run the PutItemCommand to put an item into the database
+    try {
+        const data = await client.send(command);
+        console.log(`Successfully uploaded data to DynamoDB table\n${data}`);
+        res.status(200);
+    } catch (err) {
+        console.log(`Error uploading data to DynamoDB table\n${err}`);
+        res.status(500).json({ error: err });
+    }
 }
