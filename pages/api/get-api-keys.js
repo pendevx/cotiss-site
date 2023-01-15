@@ -1,9 +1,15 @@
 const requestIp = require("request-ip");
 
 export default function getApiKeys(req, res) {
-    const clientIp = requestIp.getClientIp(req);
+    function isLocalIP(ip) {
+        if (!(ip === "::1" || ip === "127.0.0.1" || ip === "::ffff:127.0.0.1")) {
+            return false;
+        }
+        return true;
+    }
 
-    if (!(clientIp === "::1" || clientIp === "127.0.0.1" || clientIp === "::ffff:127.0.0.1")) {
+    const ip = requestIp.getClientIp(req);
+    if (!isLocalIP(ip)) {
         res.status(400);
         return;
     }

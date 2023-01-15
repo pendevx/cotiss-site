@@ -1,7 +1,23 @@
 import { DynamoDBClient, GetItemCommand } from "@aws-sdk/client-dynamodb";
+const requestIp = require("request-ip");
 
-export default function uploadToDDB(req, res) {
-    const ddbCredentials = fetch(`http://localhost:${req.body.PORT}/api/get-api-keys`).then(res => res.json()).catch(err => console.log(err));
+export default async function uploadToDDB(req, res) {
+    function isLocalIP(ip) {
+        if (!(ip === "::1" || ip === "127.0.0.1" || ip === "::ffff:127.0.0.1")) {
+            return false;
+        }
+        return true;
+    }
+
+    const ip = requestIp.getClientIp(req);
+    if (!isLocalIP(ip)) {
+        res.status(400);
+        return;
+    }
+
+    const ddbCredentials = await fetch(`http://localhost:${req.body.PORT}/api/get-api-keys`)
+        .then(res => res.json())
+        .catch(err => console.log(err));
 
     const client = new DynamoDBClient({ 
         credentials: ddbCredentials,
@@ -19,15 +35,13 @@ export default function uploadToDDB(req, res) {
 
     const command = new GetItemCommand(params);
 
-    client.send(command)
-        .then(data => {
-            const quote = data.Item.quote.S;
-            console.log(data);
-            res.status(200).json({ quote: quote });
-        })
-        .catch(err => {
-            console.log(err);
-            res.status(500).json({ error: err });
-        }
-    );
+    try {
+        const data = await client.send(command);
+        const quote = data.Item.quote.S;
+        console.log(data);
+        res.status(200).json({ quote: quote });
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({ error: "Error fetching data from DynamoDB table" });
+    }
 }

@@ -1,6 +1,20 @@
 import { DynamoDBClient, PutItemCommand } from "@aws-sdk/client-dynamodb";
+const requestIp = require("request-ip");
 
 export default function uploadToDDB(req, res) {
+    function isLocalIP(ip) {
+        if (!(ip === "::1" || ip === "127.0.0.1" || ip === "::ffff:127.0.0.1")) {
+            return false;
+        }
+        return true;
+    }
+
+    const ip = requestIp.getClientIp(req);
+    if (!isLocalIP(ip)) {
+        res.status(400);
+        return;
+    }
+
     const ddbCredentials = fetch(`http://localhost:${req.body.PORT}/api/get-api-keys`)
         .then(res => res.json())
         .catch(err => console.log(err));
@@ -9,8 +23,6 @@ export default function uploadToDDB(req, res) {
         credentials: ddbCredentials,
         region: "us-east-1",
     });
-
-    console.log(req.body);
 
     // Parameters to send to DynamoDB
     const params = {

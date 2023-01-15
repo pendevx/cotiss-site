@@ -20,7 +20,9 @@ function uploadQuote(_dbData, inputtedQuote) {
             dbData: _dbData,
             quote: inputtedQuote
         })
-    }).then(() => _dbData.TableItemCount++);
+    });
+
+    _dbData.TableItemCount++;
 
     // Replace the data in the json file with an updated TableItemCount
     fetch(`http://localhost:${_PORT}/api/update-db-data`, {
@@ -32,7 +34,6 @@ function uploadQuote(_dbData, inputtedQuote) {
 
 // Page: the component for the main page
 export default function Page(props) {
-    console.log(props);
     const [ input, setInput ] = React.useState("");
 
     let quote = "";
@@ -70,16 +71,23 @@ export async function getServerSideProps() {
         props.error = "No feedback in the database!";
         return { props };
     }
-
-    console.log(_dbData)
     
-    const quote = await fetch(`http://localhost:${_PORT}/api/read-db-quote`)
-        .then(res => res.json())
-        .catch(err => {
-            console.log(err);
-            props.error = err;
-        }
-    );
+    const quote = await fetch(`http://localhost:${_PORT}/api/read-db-quote`, {
+        method: "POST",
+        headers: { 
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+            PORT: _PORT,
+            dbData: _dbData
+        })
+    })
+    .then(res => res.json())
+    .then(data => data.quote)
+    .catch(err => {
+        console.log(err);
+        props.error = "Error reading data from the DynamoDB table.";
+    });
 
     props.quote = quote;
 
