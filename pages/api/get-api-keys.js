@@ -1,6 +1,6 @@
 const requestIp = require("request-ip");
 
-export default function getApiKeys(req, res) {
+export default async function getApiKeys(req, res) {
     function isLocalIP(ip) {
         if (!(ip === "::1" || ip === "127.0.0.1" || ip === "::ffff:127.0.0.1")) {
             return false;
